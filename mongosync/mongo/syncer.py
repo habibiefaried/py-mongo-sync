@@ -8,9 +8,17 @@ from mongosync.config import MongoConfig
 from mongosync.common_syncer import CommonSyncer
 from mongosync.mongo.handler import MongoHandler
 from mongosync.multi_oplog_replayer import MultiOplogReplayer
+import time
 
 log = Logger.get()
 
+'''
+delay for george
+in seconds
+'''
+
+sync_collection_delay = 1
+replay_oplog_delay = 1
 
 class MongoSyncer(CommonSyncer):
     """ MongoDB synchronizer.
@@ -89,6 +97,11 @@ class MongoSyncer(CommonSyncer):
         self._progress_logger.register(src_ns, total)
 
         while True:
+            print "[DEBUG] - _sync_collection"
+            print "[SYNC FROM] db "+src_dbname+" coll "+ src_collname
+            print "[SYNC TO] db "+dst_dbname+" coll "+ dst_collname
+            time.sleep(sync_collection_delay)
+
             try:
                 cursor = self._src.client()[src_dbname][src_collname].find(filter=None,
                                                                            cursor_type=pymongo.cursor.CursorType.EXHAUST,
@@ -188,6 +201,11 @@ class MongoSyncer(CommonSyncer):
         dst_dbname, dst_collname = self._conf.db_coll_mapping(src_dbname, src_collname)
 
         while True:
+            print "[DEBUG] - _sync_collection_with_query"
+            print "[SYNC FROM] db "+src_dbname+" coll "+ src_collname
+            print "[SYNC TO] db "+dst_dbname+" coll "+ dst_collname
+            time.sleep(sync_collection_delay)
+
             try:
                 cursor = self._src.client()[src_dbname][src_collname].find(filter=query,
                                                                            cursor_type=pymongo.cursor.CursorType.EXHAUST,
@@ -254,6 +272,9 @@ class MongoSyncer(CommonSyncer):
                 cursor = self._src.tail_oplog(start_optime)
 
                 while True:
+                    print "[DEBUG] - _replay_oplog"
+                    time.sleep(replay_oplog_delay)
+
                     try:
                         if need_log:
                             self._log_optime(self._last_optime)

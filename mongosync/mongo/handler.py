@@ -5,9 +5,19 @@ import bson
 from mongosync import mongo_utils
 from mongosync.config import MongoConfig
 from mongosync.logger import Logger
+import time
 
 log = Logger.get()
 
+'''
+delay for george
+in seconds
+'''
+
+create_index_delay = 2
+bulk_write_delay = 60
+locate_bulk_write_error = 1
+replay_oplog_delay = 1
 
 class MongoHandler(object):
     def __init__(self, conf):
@@ -42,6 +52,7 @@ class MongoHandler(object):
         """ Try to reconnect until success.
         """
         while True:
+            time.sleep(1)
             try:
                 self.close()
                 self.connect()
@@ -65,6 +76,8 @@ class MongoHandler(object):
         """ Create index.
         """
         while True:
+            print "[DEBUG] - create_index - "+dbname+" - "+collname+"....zzzzzz"
+            time.sleep(create_index_delay)
             try:
                 self._mc[dbname][collname].create_index(keys, **options)
                 return
@@ -76,6 +89,8 @@ class MongoHandler(object):
         """ Bulk write documents until success.
         """
         while True:
+            print "[DEBUG] - bulk_write - "+dbname+" - "+collname+"....zzzzzz"
+            time.sleep(bulk_write_delay)
             try:
                 self._mc[dbname][collname].bulk_write(reqs,
                                                       ordered=True,
@@ -92,11 +107,13 @@ class MongoHandler(object):
                 # so abort it and bugfix
                 sys.exit(1)
 
-    def locate_bulk_write_error(self, dbname, collname, reqs):
+    def (self, dbname, collname, reqs):
         """ Write documents one by one to locate the error(s).
         """
+        print "[DEBUG] - locate_bulk_write_error - "+dbname+" - "+collname
         for req in reqs:
             while True:
+                time.sleep(locate_bulk_write_error)
                 try:
                     if isinstance(req, pymongo.ReplaceOne):
                         self._mc[dbname][collname].replace_one(req._filter, req._doc, upsert=req._upsert)
@@ -137,6 +154,8 @@ class MongoHandler(object):
         """
         dbname, collname = mongo_utils.parse_namespace(oplog['ns'])
         while True:
+            print "[DEBUG] - replay_oplog - "+dbname+" - "+collname
+            time.sleep(replay_oplog_delay)
             try:
                 op = oplog['op']  # 'n' or 'i' or 'u' or 'c' or 'd'
 
